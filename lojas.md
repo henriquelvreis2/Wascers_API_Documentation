@@ -190,6 +190,49 @@ A sincronização cria um feed programado por página, chamado **Wascer · catá
 - Só o dono ou um admin grava credenciais e sincroniza.
 - Os produtos não passam pela plataforma: o Google e a Meta leem os feeds direto da loja.
 
+## App WhatsApp
+
+O app conecta o número da loja de um destes dois jeitos:
+
+- **API oficial:** WhatsApp Cloud API da Meta.
+- **API não oficial:** um servidor no padrão Evolution API.
+
+Ele envia mensagens, recebe as respostas por webhook e guarda o histórico por número.
+
+| Modo | Configuração | Credenciais (cifradas) |
+|---|---|---|
+| `oficial` | `phone_number_id`, `waba_id` | `token`: token permanente de usuário do sistema, com `whatsapp_business_messaging` e `whatsapp_business_management`. `app_secret`: assina o webhook |
+| `nao_oficial` | `url` (https, domínio público), `instancia` | `apikey` |
+
+Proteções:
+
+- **Sem repetição:** a mesma mensagem não vai para o mesmo número duas vezes em 24 h. A API responde `409`.
+- **Limite por minuto:** 20 envios por padrão, configurável até 80. Acima disso, a API responde `429`.
+- **Registro:** todo envio guarda quem mandou.
+- **Webhook oficial:** só é aceito com a assinatura `X-Hub-Signature-256`.
+- **Webhook não oficial:** só é aceito com o token da loja no endereço.
+- **Grupos e status:** ficam fora do histórico.
+
+Na API oficial, mensagem livre só é aceita até 24 h depois da última mensagem do cliente. Fora dessa janela, use um modelo aprovado.
+
+## App E-mail
+
+O app dispara campanhas pelo **Cloudflare Email Service**, na conta Cloudflare da própria loja.
+
+Pré-requisitos na Cloudflare:
+
+- o domínio cadastrado em **Email Sending**: a Cloudflare cria SPF, DKIM e DMARC sozinha;
+- um token de API com **Email Sending: Edit**;
+- o plano Workers Paid, para enviar a qualquer destinatário.
+
+Como funcionam os envios:
+
+- **Lotes:** a tela manda 25 endereços por chamada.
+- **Sem repetição:** cada endereço recebe a campanha uma vez só.
+- **Descadastro:** quem se descadastrou fica de fora. Todo e-mail leva o link "Não quero mais receber" e o cabeçalho `List-Unsubscribe` com one-click.
+- **Destinatários:** na loja e-commerce, o público padrão são os clientes que aceitam e-mail de marketing. Na loja lead, use uma lista colada.
+- **Paradas:** se a Cloudflare limitar o envio ou recusar o token, o lote para. Rodar de novo continua de onde parou.
+
 ## API do admin
 
 O admin é uma aplicação que conversa com a própria API. Tudo o que a tela faz passa por estas rotas, em `https://admin.wascer.com`. Hoje o acesso exige a sessão do admin: login com verificação em duas etapas, mais o cabeçalho `Origin` do próprio admin. O acesso por chave de API para agentes e integrações é o próximo passo.
@@ -209,12 +252,27 @@ O admin é uma aplicação que conversa com a própria API. Tudo o que a tela fa
 | PUT | `/api/catalogos/{loja}/{app}/config` | `{"merchant_id":"123"}` ou `{"catalog_id":"456"}` |
 | POST | `/api/catalogos/{loja}/{app}/testar` | Testa a credencial na conta |
 | POST | `/api/catalogos/{loja}/{app}/sincronizar` | Cria ou atualiza os feeds na conta |
+| GET | `/api/whatsapp/{loja}` | Estado do app WhatsApp: config, credenciais gravadas, endereço do webhook, contadores |
+| PUT | `/api/whatsapp/{loja}/config` | `{"modo":"oficial"}` ou `"nao_oficial"`, mais `phone_number_id`, `waba_id`, `url`, `instancia`, `limite_minuto` |
+| POST | `/api/whatsapp/{loja}/testar` | Confere a credencial e o número ou a instância |
+| GET | `/api/whatsapp/{loja}/modelos` | Modelos aprovados (só oficial) |
+| POST | `/api/whatsapp/{loja}/enviar` | `{"numero":"11999990000","texto":"…"}` ou `{"numero":"…","modelo":"nome","idioma":"pt_BR","variaveis":["…"]}` |
+| GET | `/api/whatsapp/{loja}/conversas` | Últimas conversas |
+| GET | `/api/whatsapp/{loja}/mensagens?numero=` | Histórico de um número |
+| GET | `/api/email/{loja}` | Estado do app E-mail e números dos últimos 30 dias |
+| PUT | `/api/email/{loja}/config` | `account_id`, `remetente`, `nome_remetente`, `responder_para` |
+| POST | `/api/email/{loja}/testar` | Manda um e-mail de teste para quem está logado |
+| GET / POST | `/api/email/{loja}/campanhas` | Lista ou cria uma campanha: `{"assunto":"…","html":"…"}` |
+| POST | `/api/email/{loja}/campanhas/{id}/teste` | Manda a campanha só para quem está logado |
+| POST | `/api/email/{loja}/campanhas/{id}/enviar` | `{"para":["a@x.com", …]}`, até 25 por chamada |
 | ANY | `/api/l/{loja}/{rota}` | Repassa para a API administrativa da loja (pedidos, produtos, clientes, conteúdo, descontos, domínios, configurações, leads) |
 
 Credenciais `{nome}` por app:
 
 - `google-ads`: `conta_servico`, que é o JSON da conta de serviço.
 - `meta-ads`: `token`, que é o token do usuário do sistema.
+- `whatsapp`: `token` e `app_secret` na API oficial; `apikey` na não oficial.
+- `email-cloudflare`: `api_token`.
 
 Erros voltam como `{"erro":"mensagem"}`:
 
@@ -244,3 +302,7 @@ Ao configurar uma loja a pedido do dono:
    - Nunca repita valores de credenciais em mensagens, URLs ou logs.
    - Para conferir se uma credencial foi gravada, use o campo `final`.
 6. **Antes de qualquer ação que muda a conta do Google ou da Meta,** como sincronizar ou apagar feeds, diga ao dono o que vai mudar.
+7. **WhatsApp e e-mail falam com clientes reais.**
+   - Confirme com o dono o texto exato e quem recebe antes de enviar ou disparar.
+   - Teste primeiro: `campanhas/{id}/teste` no e-mail, um número do próprio dono no WhatsApp.
+   - Nunca reenvie quando der erro ou `409`.
