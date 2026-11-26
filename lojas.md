@@ -215,6 +215,22 @@ Proteções:
 
 Na API oficial, mensagem livre só é aceita até 24 h depois da última mensagem do cliente. Fora dessa janela, use um modelo aprovado.
 
+### Anexos e áudio
+
+Só pela API oficial, dentro da janela de 24 h:
+
+| Tipo | Formatos | Até |
+|---|---|---|
+| Foto | JPG, PNG | 5 MB |
+| Vídeo | MP4, 3GP | 16 MB |
+| Áudio | AAC, AMR, MP3, M4A, OGG | 16 MB |
+| Documento | PDF, Word, Excel, PowerPoint, TXT | 25 MB |
+
+- O áudio gravado na Central sai em Ogg/Opus mono e chega como mensagem de voz.
+- Foto, vídeo e documento aceitam legenda.
+- As proteções do texto valem para anexo. O mesmo arquivo com a mesma legenda não vai de novo para o mesmo número em 24 h.
+- A Meta guarda a mídia por pouco tempo: a recebida some depois de uns 7 dias, a enviada depois de uns 30.
+
 ## App E-mail
 
 O app dispara campanhas pelo **Cloudflare Email Service**, na conta Cloudflare da própria loja.
@@ -257,6 +273,8 @@ O admin é uma aplicação que conversa com a própria API. Tudo o que a tela fa
 | POST | `/api/whatsapp/{loja}/testar` | Confere a credencial e o número ou a instância |
 | GET | `/api/whatsapp/{loja}/modelos` | Modelos aprovados (só oficial) |
 | POST | `/api/whatsapp/{loja}/enviar` | `{"numero":"11999990000","texto":"…"}` ou `{"numero":"…","modelo":"nome","idioma":"pt_BR","variaveis":["…"]}` |
+| POST | `/api/whatsapp/{loja}/anexo` | `multipart/form-data` com `numero` e `arquivo`. Opcionais: `linha`, `legenda` e `voz=1` (áudio Ogg/Opus mono vira mensagem de voz) |
+| GET | `/api/whatsapp/{loja}/midia?id=` | Arquivo de uma mensagem com mídia (foto, áudio, vídeo, documento), pelo `id` da mensagem, enquanto a Meta guarda |
 | GET | `/api/whatsapp/{loja}/conversas` | Últimas conversas |
 | GET | `/api/whatsapp/{loja}/mensagens?numero=` | Histórico de um número |
 | GET | `/api/email/{loja}` | Estado do app E-mail e números dos últimos 30 dias |
