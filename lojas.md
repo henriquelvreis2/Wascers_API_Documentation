@@ -21,6 +21,13 @@ O dono ou um administrador escolhe o tipo em `admin.wascer.com/`, no cartão **T
 
 Na loja `lead`, cada pessoa com acesso também é responsável no CRM da loja. Quem aceita o convite, é adicionado ou tem o acesso editado em **Configurações › Pessoas com acesso** passa a aparecer na transferência de leads e na conversa do WhatsApp, com o mesmo nome do acesso. Para isso, a plataforma chama a loja em `POST /api/admin/crm/cadastro/pessoas/garantir` com `{"nome":"…","email":"…","reativar":true}`. A loja acha a pessoa pelo e-mail e cria o cadastro se faltar. O `reativar` só vai quando o acesso acabou de ser dado; no Editar, quem foi desativado no CRM continua desativado. Dois responsáveis não podem ter o mesmo e-mail.
 
+Quem tem acesso **Equipe** vê os leads em que é responsável e as tarefas desses leads. No **Editar**, o dono ou um administrador pode liberar mais duas coisas:
+
+- **Vê todos os leads destes funis** (`funis`): nos funis marcados, a pessoa vê e trabalha todos os leads, de qualquer responsável.
+- **Vê a agenda destas pessoas** (`agendas`): em **Leads › Tarefas**, a pessoa escolhe a agenda de outra pessoa (ou "Todas as agendas que vejo") e vê o dia, a hora e o assunto das tarefas abertas dela. Serve, por exemplo, para a SDR que marca reunião para os closers. `["*"]` libera a agenda de todas as pessoas, inclusive quem entrar depois. A tarefa de um lead que a pessoa não pode abrir aparece sem link e sem o botão **Feito**.
+
+As duas listas vão dentro do usuário assinado que a plataforma manda para a loja, então a loja confia nelas.
+
 ## App Wascer: rastreamento
 
 O app Wascer liga o rastreamento completo da loja. Ele monta o dataLayer de e-commerce no padrão do GA4 em todas as páginas e envia os eventos por um destes caminhos, à escolha da loja:
@@ -265,9 +272,9 @@ O admin é uma aplicação que conversa com a própria API. Tudo o que a tela fa
 | POST / DELETE | `/api/p/lojas/{loja}/apps/{app}` | Instala ou remove um app |
 | GET | `/api/p/lojas/{loja}/apps/{app}/segredos` | Credenciais gravadas: só nome, final e data |
 | PUT / DELETE | `/api/p/lojas/{loja}/apps/{app}/segredos/{nome}` | Grava ou apaga uma credencial: `{"valor":"…"}` |
-| GET | `/api/p/lojas/{loja}/equipe` | Pessoas com acesso e convites abertos (dono ou admin) |
+| GET | `/api/p/lojas/{loja}/equipe` | Pessoas com acesso (com `funis` e `agendas` de quem é Equipe) e convites abertos (dono ou admin) |
 | POST | `/api/p/lojas/{loja}/convites` | Convida por e-mail: `{"email":"…","nome":"…","papel":"equipe"}` ou `"admin"`. Quem já tem conta entra na hora (dono ou admin) |
-| PUT | `/api/p/lojas/{loja}/equipe/{id}` | Muda o acesso: `{"papel":"equipe","funis":["…"]}` (funis em que a pessoa vê todos os leads) ou `{"papel":"admin"}` (dono ou admin) |
+| PUT | `/api/p/lojas/{loja}/equipe/{id}` | Muda o acesso: `{"papel":"equipe","funis":["…"],"agendas":["…"]}` (funis em que a pessoa vê todos os leads; ids das pessoas do CRM de quem ela vê a agenda, ou `["*"]` para todas) ou `{"papel":"admin"}`. Lista que não vem no pedido fica como estava (dono ou admin) |
 | GET | `/api/p/lojas/{loja}/auditoria` | Registro de atividades |
 | GET | `/api/catalogos/{loja}/{google-ads\|meta-ads}` | Estado do catálogo: conta, feeds da loja, última sincronização |
 | PUT | `/api/catalogos/{loja}/{app}/config` | `{"merchant_id":"123"}` ou `{"catalog_id":"456"}` |
