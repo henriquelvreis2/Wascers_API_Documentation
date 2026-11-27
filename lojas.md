@@ -23,6 +23,8 @@ Na loja `lead`, cada pessoa com acesso também é responsável no CRM da loja. Q
 
 Cada lead tem um **Responsável** (o closer) e pode ter um **SDR** (quem prospectou e marcou a reunião). Quem tem acesso **Equipe** vê os leads em que é responsável ou SDR e as tarefas desses leads. A SDR pode se colocar como SDR de um lead sem SDR e passar o lead ao closer sem deixar de vê-lo; SDR de outra pessoa só o dono ou um administrador troca. Na API da loja, o campo é `sdr_id` (id da pessoa do CRM), e a lista e os relatórios aceitam o filtro `sdr` (`-` = sem SDR).
 
+Na ficha do lead, quem escreveu uma anotação edita ou apaga a dela, e o dono ou um administrador mexe em qualquer uma. A anotação editada fica marcada como "editada". Na API da loja: `PUT crm/historico/{id}` com `{"texto":"…"}` edita e `DELETE crm/historico/{id}` apaga. Só anotação se edita ou apaga; tarefa continua só com `{"feito":true}`. Cada anotação da ficha vem com `editavel`.
+
 No **Editar**, o dono ou um administrador pode liberar mais duas coisas:
 
 - **Vê todos os leads destes funis** (`funis`): nos funis marcados, a pessoa vê e trabalha todos os leads, de qualquer responsável.
