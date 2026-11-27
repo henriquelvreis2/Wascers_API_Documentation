@@ -21,7 +21,9 @@ O dono ou um administrador escolhe o tipo em `admin.wascer.com/`, no cartão **T
 
 Na loja `lead`, cada pessoa com acesso também é responsável no CRM da loja. Quem aceita o convite, é adicionado ou tem o acesso editado em **Configurações › Pessoas com acesso** passa a aparecer na transferência de leads e na conversa do WhatsApp, com o mesmo nome do acesso. Para isso, a plataforma chama a loja em `POST /api/admin/crm/cadastro/pessoas/garantir` com `{"nome":"…","email":"…","reativar":true}`. A loja acha a pessoa pelo e-mail e cria o cadastro se faltar. O `reativar` só vai quando o acesso acabou de ser dado; no Editar, quem foi desativado no CRM continua desativado. Dois responsáveis não podem ter o mesmo e-mail.
 
-Quem tem acesso **Equipe** vê os leads em que é responsável e as tarefas desses leads. No **Editar**, o dono ou um administrador pode liberar mais duas coisas:
+Cada lead tem um **Responsável** (o closer) e pode ter um **SDR** (quem prospectou e marcou a reunião). Quem tem acesso **Equipe** vê os leads em que é responsável ou SDR e as tarefas desses leads. A SDR pode se colocar como SDR de um lead sem SDR e passar o lead ao closer sem deixar de vê-lo; SDR de outra pessoa só o dono ou um administrador troca. Na API da loja, o campo é `sdr_id` (id da pessoa do CRM), e a lista e os relatórios aceitam o filtro `sdr` (`-` = sem SDR).
+
+No **Editar**, o dono ou um administrador pode liberar mais duas coisas:
 
 - **Vê todos os leads destes funis** (`funis`): nos funis marcados, a pessoa vê e trabalha todos os leads, de qualquer responsável.
 - **Vê a agenda destas pessoas** (`agendas`): em **Leads › Tarefas**, a pessoa escolhe a agenda de outra pessoa (ou "Todas as agendas que vejo") e vê o dia, a hora e o assunto das tarefas abertas dela. Serve, por exemplo, para a SDR que marca reunião para os closers. `["*"]` libera a agenda de todas as pessoas, inclusive quem entrar depois. A tarefa de um lead que a pessoa não pode abrir aparece sem link e sem o botão **Feito**.
